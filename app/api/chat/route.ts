@@ -1,13 +1,20 @@
+import { NextRequest, NextResponse } from "next/server";
 import Groq from "groq-sdk";
-import { NextResponse } from "next/server";
 
-const groq = new Groq({ 
-  apiKey: process.env.GROQ_API_KEY // Note: No NEXT_PUBLIC_ prefix here
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { message } = await req.json();
+
+    if (!message) {
+      return NextResponse.json(
+        { error: 'Message is required' },
+        { status: 400 }
+      );
+    }
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -21,8 +28,8 @@ export async function POST(req: Request) {
       max_tokens: 1024
     });
 
-    return NextResponse.json({ 
-      content: completion.choices[0]?.message?.content || "" 
+    return NextResponse.json({
+      content: completion.choices[0]?.message?.content || ""
     });
   } catch (error) {
     console.error('Error:', error);
@@ -32,3 +39,9 @@ export async function POST(req: Request) {
     );
   }
 }
+
+// Enable CORS
+export const config = {
+  runtime: 'edge',
+  regions: ['iad1'],
+};
